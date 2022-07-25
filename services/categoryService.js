@@ -1,6 +1,6 @@
-import Category from '../models/categoryModel.js';
 import slugify from 'slugify';
 import asyncHandler from 'express-async-handler';
+import Category from '../models/categoryModel.js';
 import ApiError from '../utils/apiError.js';
 
 // @desc    Get all categories
