@@ -16,9 +16,17 @@ export const setCategoryIdToBody = (req, res, next) => {
 // @access - Private
 export const createSubCategory = asyncHandler(async (req, res) => {
         const name = req.body.name.toLowerCase();
-        const { category } = req.body;
-        const subCategory = await SubCategory.create({ name, slug: slugify(name), category });
-        res.status(201).json({ data: subCategory });
+        const slug = slugify(name, { lower: true });
+        const {category} = req.body;
+        const subCategory = await SubCategory.create({
+                name,
+                slug,
+                category,
+        });
+        res.status(201).json({
+                success: true,
+                data: subCategory,
+        });
 }
 );
 
