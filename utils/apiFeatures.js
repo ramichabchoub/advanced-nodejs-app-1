@@ -38,15 +38,23 @@ class ApiFeatures {
                 return this;
         }
 
-        search() {
+        search(modelName) {
                 if (this.queryString.keyword) {
                         const keyword = this.queryString.keyword.toLowerCase();
-                        this.mongooseQuery = this.mongooseQuery.find({
-                                $or: [
-                                        { title: { $regex: keyword, $options: 'i' } },
-                                        { description: { $regex: keyword, $options: 'i' } },
-                                ],
-                        });
+                        if (modelName === 'product') {
+                                this.mongooseQuery = this.mongooseQuery.find({
+                                        $or: [
+                                                { title: { $regex: keyword, $options: 'i' } },
+                                                { description: { $regex: keyword, $options: 'i' } },
+                                        ],
+                                });
+                        } else{
+                                this.mongooseQuery = this.mongooseQuery.find({
+                                        $or: [
+                                                { name: { $regex: keyword, $options: 'i' } },
+                                        ],
+                                });
+                        }
                 }
                 return this;
         }
@@ -68,10 +76,7 @@ class ApiFeatures {
                 pagination.previousPage = pagination.hasPreviousPage ? page - 1 : null;
 
                 // Build query
-                this.mongooseQuery = this.mongooseQuery.skip(skip).limit(limit).populate({
-                        path: 'category',
-                        select: 'name -_id',
-                });
+                this.mongooseQuery = this.mongooseQuery.skip(skip).limit(limit);
 
                 this.paginationResult = pagination;
 

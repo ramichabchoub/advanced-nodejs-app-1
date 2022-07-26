@@ -2,6 +2,7 @@ import slugify from 'slugify';
 import asyncHandler from 'express-async-handler';
 import ApiError from '../utils/apiError.js';
 import SubCategory from '../models/subCategoryModel.js';
+import ApiFeatures from '../utils/apiFeatures.js';
 
 
 export const setCategoryIdToBody = (req, res, next) => {
@@ -45,22 +46,16 @@ export const createFilterObject = (req, res, next) => {
 // @route  - GET /api/v1/subcategories
 // @access - Private
 export const getSubCategories = asyncHandler(async (req, res) => {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-
-        const subCategories = await SubCategory.find(req.filterObject)
-                .skip((page - 1) * limit)
-                .limit(limit)
-                .populate({
-                        path: 'category',
-                        select: 'name -_id'
-                }
-                );
+        const countDocuments = await SubCategory.countDocuments();
+        const features = new ApiFeatures(SubCategory.find(), req.query);
+        features.filter().sort().search().paginate(countDocuments).select();
+        const { mongooseQuery, paginationResult } = features;
+        const subCategories = await mongooseQuery;
         res.status(200).json({
-                page,
                 success: true,
                 count: subCategories.length,
-                data: subCategories
+                paginationResult,
+                data: subCategories,
         });
 }
 );

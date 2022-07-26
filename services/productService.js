@@ -8,11 +8,13 @@ import ApiFeatures from '../utils/apiFeatures.js';
 // @route   GET /api/v1/products
 // @access  Public
 export const getProducts = asyncHandler(async (req, res) => {
+        // Build query
         const countDocuments = await Product.countDocuments();
+        const modelName = 'product';
         const features = new ApiFeatures(Product.find(), req.query);
-        features.filter().sort().search().paginate(countDocuments).select();
+        features.filter().sort().search(modelName).paginate(countDocuments).select();
+        // Execute query
         const { mongooseQuery, paginationResult } = features;
-        console.log(paginationResult);
         const products = await mongooseQuery;
         res.status(200).json({
                 success: true,
