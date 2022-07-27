@@ -13,6 +13,7 @@ import {
         createBrand,
         updateBrand,
         deleteBrand,
+        applySlug,
 } from '../services/brandService.js';
 
 const router = express.Router();
@@ -24,7 +25,7 @@ router
 router
         .route('/:id')
         .get(getBrandValidator, getBrand)
-        .put(updateBrandValidator, updateBrand)
+        .put(updateBrandValidator, applySlug, updateBrand)
         .delete(deleteBrandValidator, deleteBrand);
 
 export default router;
