@@ -16,6 +16,18 @@ const categorySchema = new mongoose.Schema({
         image: String,
 }, { timestamps: true });
 
+// mongoose middleware
+const setImageUrl = (doc, next) => {
+        if (doc.image) {
+                doc.image = `${process.env.BASE_URL}/uploads/categories/${doc.image}`;
+        }
+}
+// init work with findOne findAll updateOne
+// set image base url + image name
+categorySchema.post('init', setImageUrl);
+// save work with createOne
+categorySchema.post('save', setImageUrl);
+
 // 2- create model
 const CategoryModel = mongoose.model('Category', categorySchema);
 

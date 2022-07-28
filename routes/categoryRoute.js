@@ -13,6 +13,8 @@ import {
         getCategory,
         updateCategory,
         deleteCategory,
+        uploadCategoryImage,
+        resizeImage,
 } from '../services/categoryService.js';
 import subcategoriesRoute from './subCategoryRoute.js';
 
@@ -23,11 +25,11 @@ router.use('/:categoryId/subcategories', subcategoriesRoute);
 router
         .route('/')
         .get(getCategories)
-        .post(createCategoryValidator, createCategory);
+        .post(uploadCategoryImage, resizeImage, createCategoryValidator, createCategory);
 router
         .route('/:id')
         .get(getCategoryValidator, getCategory)
-        .put(updateCategoryValidator, updateCategory)
+        .put(uploadCategoryImage, resizeImage, updateCategoryValidator, updateCategory)
         .delete(deleteCategoryValidator, deleteCategory);
 
 export default router;

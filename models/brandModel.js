@@ -15,4 +15,14 @@ const brandSchema = new mongoose.Schema({
         image: String,
 }, { timestamps: true });
 
+
+const setImageUrl = (doc, next) => {
+        if (doc.image) {
+                doc.image = `${process.env.BASE_URL}/uploads/brands/${doc.image}`;
+        }
+}
+brandSchema.post('init', setImageUrl);
+// save work with createOne
+brandSchema.post('save', setImageUrl);
+
 export default mongoose.model('Brand', brandSchema);

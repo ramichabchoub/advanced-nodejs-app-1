@@ -1,3 +1,6 @@
+import { v4 as uuidv4 } from 'uuid';
+import sharp from 'sharp';
+import asyncHandler from 'express-async-handler';
 import Category from '../models/categoryModel.js';
 import {
         deleteOne,
@@ -6,6 +9,44 @@ import {
         getOne,
         getAll,
 } from './handlersFactory.js';
+import { uploadSingleImage } from '../middlewares/uploadImageMiddleware.js';
+
+// 1) Disk storage engine
+// const multerStorage = multer.diskStorage({
+//         destination: (req, file, cb) => {
+//                 cb(null, 'uploads/categories');
+//         },
+//         filename: (req, file, cb) => {
+//                 // const extention = file.originalname.split('.').pop();
+//                 const ectension = file.mimetype.split('/')[1];
+//                 const filename = `category-${uuidv4()}-${Date.now()}.${ectension}`;
+//                 cb(null, filename);
+//         }
+// });
+
+// const multerFilter = (req, file, cb) => { // check if file is an image or not
+//         if (file.mimetype.startsWith('image')) {
+//                 cb(null, true);
+//         } else {
+//                 cb(new ApiError('Not an image!', 400), false);
+//         }
+// }
+
+// 2) Memory storage engine
+// const multerStorage = multer.memoryStorage();
+// const upload = multer({ storage: multerStorage, fileFilter: multerFilter });
+
+// image processing
+export const resizeImage = asyncHandler(async (req, res, next) => {
+        const filename = `category-${uuidv4()}-${Date.now()}.jpeg`;
+        await sharp(req.file.buffer).resize(400, 400).toFormat('jpeg').jpeg({ quality: 90 }).toFile(`uploads/categories/${filename}`);
+        req.body.image = filename;
+        next();
+}
+);
+
+// export const uploadCategoryImage = upload.single('image');
+export const uploadCategoryImage = uploadSingleImage('image');
 
 // @desc    Get all categories
 // @route   GET /api/v1/categories

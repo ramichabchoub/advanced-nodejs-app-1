@@ -1,6 +1,9 @@
+import path from 'path';
+
 import express from 'express';
 import dotenv from 'dotenv';
 import morgan from 'morgan';
+
 import dbConnection from './config/database.js';
 import ApiError from './utils/apiError.js';
 import { globalError } from './middlewares/errorMiddleware.js';
@@ -18,6 +21,9 @@ dbConnection();
 
 // middleware
 app.use(express.json());
+const __dirname = path.resolve();
+app.use(express.static(path.join(__dirname, 'uploads')));
+
 if (process.env.NODE_ENV === 'development') {
         app.use(morgan('dev'));
         console.log(`mode : ${process.env.NODE_ENV}`);

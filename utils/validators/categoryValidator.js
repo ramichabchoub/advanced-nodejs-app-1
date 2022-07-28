@@ -22,12 +22,14 @@ export const createCategoryValidator = [
 
 export const updateCategoryValidator = [
         check('id').isMongoId().withMessage('Invalid id format'),
-        check('name').notEmpty().withMessage('Name is required')
+        check('name').optional().notEmpty().withMessage('Name is required')
                 .isLength({ min: 2 }).withMessage('Name must be at least 3 characters long')
                 .isLength({ max: 32 }).withMessage('Name must be at most 20 characters long'),
         body('name').custom((value, { req }) => {
-                req.body.name = value.toLowerCase();
-                req.body.slug = slugify(value);
+                if (value) {
+                        req.body.name = value.toLowerCase();
+                        req.body.slug = slugify(value);
+                }
                 return true;
         }
         ),
