@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const prductSchema = new mongoose.Schema({
+const productSchema = new mongoose.Schema({
         title: {
                 type: String,
                 required: true,
@@ -72,7 +72,7 @@ const prductSchema = new mongoose.Schema({
 });
 
 // mongoose query middleware
-prductSchema.pre(/^find/, function (next) {
+productSchema.pre(/^find/, function (next) {
         this.populate({
                 path: "category",
                 select: "name -_id"
@@ -81,4 +81,28 @@ prductSchema.pre(/^find/, function (next) {
 }
 );
 
-export default mongoose.model("Product", prductSchema);
+const setImageURL = (doc) => {
+        if (doc.imageCover) {
+                const imageUrl = `${process.env.BASE_URL}/products/${doc.imageCover}`;
+                doc.imageCover = imageUrl;
+        }
+        if (doc.images) {
+                const imagesList = [];
+                doc.images.forEach((image) => {
+                        const imageUrl = `${process.env.BASE_URL}/products/${image}`;
+                        imagesList.push(imageUrl);
+                });
+                doc.images = imagesList;
+        }
+};
+// findOne, findAll and update
+productSchema.post('init', (doc) => {
+        setImageURL(doc);
+});
+
+// create
+productSchema.post('save', (doc) => {
+        setImageURL(doc);
+});
+
+export default mongoose.model("Product", productSchema);

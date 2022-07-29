@@ -12,7 +12,9 @@ import {
         getProduct,
         createProduct,
         updateProduct,
-        deleteProduct
+        deleteProduct,
+        uploadProductImages,
+        resizeProductImages
 } from '../services/productService.js';
 
 const router = express.Router();
@@ -20,7 +22,7 @@ const router = express.Router();
 router
         .route('/')
         .get(getProducts)
-        .post(createProductValidator, createProduct);
+        .post(uploadProductImages, resizeProductImages, createProductValidator, createProduct);
 router
         .route('/:id')
         .get(getProductValidator, getProduct)
