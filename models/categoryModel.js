@@ -16,17 +16,21 @@ const categorySchema = new mongoose.Schema({
         image: String,
 }, { timestamps: true });
 
-// mongoose middleware
-const setImageUrl = (doc, next) => {
+const setImageURL = (doc) => {
         if (doc.image) {
-                doc.image = `${process.env.BASE_URL}/uploads/categories/${doc.image}`;
+                const imageUrl = `${process.env.BASE_URL}/categories/${doc.image}`;
+                doc.image = imageUrl;
         }
-}
-// init work with findOne findAll updateOne
-// set image base url + image name
-categorySchema.post('init', setImageUrl);
-// save work with createOne
-categorySchema.post('save', setImageUrl);
+};
+// findOne, findAll and update
+categorySchema.post('init', (doc) => {
+        setImageURL(doc);
+});
+
+// create
+categorySchema.post('save', (doc) => {
+        setImageURL(doc);
+});
 
 // 2- create model
 const CategoryModel = mongoose.model('Category', categorySchema);
