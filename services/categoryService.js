@@ -39,7 +39,9 @@ import { uploadSingleImage } from '../middlewares/uploadImageMiddleware.js';
 // image processing
 export const resizeImage = asyncHandler(async (req, res, next) => {
         const filename = `category-${uuidv4()}-${Date.now()}.jpeg`;
-        await sharp(req.file.buffer).resize(400, 400).toFormat('jpeg').jpeg({ quality: 90 }).toFile(`uploads/categories/${filename}`);
+        if (req.file) {
+                await sharp(req.file.buffer).resize(400, 400).toFormat('jpeg').jpeg({ quality: 90 }).toFile(`uploads/categories/${filename}`);
+        }
         req.body.image = filename;
         next();
 }
@@ -85,7 +87,7 @@ export const getCategory = getOne(Category);
 
 // @desc   - Create a new category
 // @route  - POST /api/v1/categories
-// @access - Private
+// @access - Private/Admin-Manager
 export const createCategory = createOne(Category);
 // export const createCategory = asyncHandler(async (req, res) => {
 //         const name = req.body.name.toLowerCase();
@@ -96,7 +98,7 @@ export const createCategory = createOne(Category);
 
 // @desc   - Update a category
 // @route  - PUT /api/v1/categories/:id
-// @access - Private
+// @access - Private/Admin-Manager
 export const updateCategory = updateOne(Category);
 // export const updateCategory = asyncHandler(async (req, res, next) => {
 //         const { id } = req.params;
@@ -114,7 +116,7 @@ export const updateCategory = updateOne(Category);
 
 // @desc   - Delete a category
 // @route  - DELETE /api/v1/categories/:id
-// @access - Private
+// @access - Private/Admin
 export const deleteCategory = deleteOne(Category);
 // export const deleteCategory = asyncHandler(async (req, res, next) => {
 //         const { id } = req.params;

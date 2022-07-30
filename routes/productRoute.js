@@ -16,17 +16,21 @@ import {
         uploadProductImages,
         resizeProductImages
 } from '../services/productService.js';
+import {
+        protect,
+        allowedTo
+} from '../services/authService.js';
 
 const router = express.Router();
 
 router
         .route('/')
         .get(getProducts)
-        .post(uploadProductImages, resizeProductImages, createProductValidator, createProduct);
+        .post(protect, allowedTo('admin', 'manager'),uploadProductImages, resizeProductImages, createProductValidator, createProduct);
 router
         .route('/:id')
         .get(getProductValidator, getProduct)
-        .put(updateProductValidator, updateProduct)
-        .delete(deleteProductValidator, deleteProduct);
+        .put(protect, allowedTo('admin', 'manager'),updateProductValidator, updateProduct)
+        .delete(protect, allowedTo('admin'),deleteProductValidator, deleteProduct);
 
 export default router;

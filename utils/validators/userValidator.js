@@ -41,7 +41,7 @@ export const createUserValidator = [
                 }
         }
         ),
-        check('role').optional().isIn(['user', 'admin']).withMessage('Role is invalid'),
+        check('role').optional().isIn(['user', 'manager', 'admin']).withMessage('Role is invalid'),
         body('name').custom((value, { req }) => {
                 req.body.name = value.toLowerCase();
                 req.body.slug = slugify(value);
@@ -79,7 +79,7 @@ export const updateUserValidator = [
                 }
         }
         ),
-        check('role').optional().isIn(['user', 'admin']).withMessage('Role is invalid'),
+        check('role').optional().isIn(['user', 'manager', 'admin']).withMessage('Role is invalid'),
         body('name').custom((value, { req }) => {
                 if (value) {
                         req.body.name = value.toLowerCase();

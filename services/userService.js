@@ -25,22 +25,22 @@ export const uploadUserImage = uploadSingleImage('profileImg');
 
 // @desc    Get all users
 // @route   GET /api/v1/users
-// @access  private
+// @access  private/admin
 export const getUsers = getAll(User);
 
 // @desc    Get a single user
 // @route   GET /api/v1/users/:id
-// @access  private
+// @access  private/admin
 export const getUser = getOne(User);
 
 // @desc   - Create a new user
 // @route  - POST /api/v1/users
-// @access - Private
+// @access - Private/Admin
 export const createUser = createOne(User);
 
 // @desc   - Update a user
 // @route  - PUT /api/v1/users/:id
-// @access - Private
+// @access - Private/Admin
 export const updateUser = asyncHandler(async (req, res, next) => {
         const doc = await User.findByIdAndUpdate(req.params.id,
                 {
@@ -63,6 +63,7 @@ export const changeUserPassword = asyncHandler(async (req, res, next) => {
         const doc = await User.findByIdAndUpdate(req.params.id,
                 {
                         password: await bcrypt.hash(req.body.password, 12),
+                        passwordChangedAt: Date.now(),
                 },
                 { new: true });
         if (!doc) {
@@ -75,5 +76,5 @@ export const changeUserPassword = asyncHandler(async (req, res, next) => {
 
 // @desc   - Delete a user
 // @route  - DELETE /api/v1/users/:id
-// @access - Private
+// @access - Private/Admin
 export const deleteUser = deleteOne(User);
