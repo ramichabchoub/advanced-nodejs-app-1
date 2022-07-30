@@ -1,8 +1,12 @@
+import crypto from 'crypto';
+
 import bcrypt from 'bcrypt';
 import Jwt from 'jsonwebtoken';
 import asyncHandler from 'express-async-handler';
+
 import ApiError from '../utils/apiError.js';
 import User from '../models/userModel.js';
+import sendEmail from '../utils/sendEmail.js';
 
 const createToken = (payload) => Jwt.sign({ userId: payload }, process.env.JWT_SECRET_KEY, { expiresIn: process.env.JWT_EXPIRE_TIME })
 
@@ -70,6 +74,7 @@ export const protect = asyncHandler(async (req, res, next) => {
         next();
 });
 
+// @desc   Authorization (user permissions)
 export const allowedTo = (...roles) => asyncHandler(async (req, res, next) => {
         // 1) access roles
         // 2) access registered user (req.user.role)
@@ -77,4 +82,44 @@ export const allowedTo = (...roles) => asyncHandler(async (req, res, next) => {
                 throw new ApiError(`This action is not allowed for ${req.user.role}`, 403);
         }
         next();
+});
+
+// @desc   Reset password
+// @route  POST /api/v1/auth/reset-password
+// @access Public
+export const forgotPassword = asyncHandler(async (req, res, next) => {
+        // 1) get user based on email
+        const user = await User.findOne({ email: req.body.email });
+        if (!user) {
+                throw new ApiError(`No user found with this email ${req.body.email}`, 404);
+        }
+        // 2) if user exist, generate 6 random digits and save it in db hash
+        const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const hashedResetCode = crypto.createHash('sha256').update(resetCode).digest('hex');
+        user.passwordResetCode = hashedResetCode;
+        // add expiration to the code (10 minutes)
+        user.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+        user.passwordResetVerified = false;
+        await user.save();
+        // 3) send the reset code via email
+        try {
+                const message = ` Hi ${user.name}, \n
+        You are receiving this email because you (or someone else) have requested the reset of the password for your account.\n\n
+        Your reset code is ${resetCode}.\n\n
+        Please click on the following link, or paste this into your browser to complete the process:\n\n
+        http://${req.headers.host}/api/v1/auth/reset-password/${resetCode}\n\n
+        If you did not request this, please ignore this email and your password will remain unchanged.\n`;
+                await sendEmail({
+                        email: user.email,
+                        subject: 'Password reset',
+                        message,
+                });
+        } catch (err) {
+                user.passwordResetCode = undefined;
+                user.passwordResetExpires = undefined;
+                user.passwordResetVerified = undefined;
+                await user.save();
+                throw new ApiError('Error sending email', 500);
+        }
+        res.status(200).json({ message: 'Email sent' });
 });
