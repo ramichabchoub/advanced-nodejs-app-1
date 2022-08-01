@@ -27,17 +27,25 @@ export const createOne = (Model) =>
         }
         );
 
-export const getOne = (Model) =>
+export const getOne = (Model, populationOpt) =>
         asyncHandler(async (req, res, next) => {
-                const doc = await Model.findById(req.params.id);
-                if (!doc) {
-                        return next(new ApiError('Not found', 404));
+                const { id } = req.params;
+                // 1) Build query
+                let query = Model.findById(id);
+                if (populationOpt) {
+                        query = query.populate(populationOpt);
                 }
-                res.status(200).json({ success: true, data: doc });
-        }
-        );
 
-export const getAll = (Model,modelName='') =>
+                // 2) Execute query
+                const document = await query;
+
+                if (!document) {
+                        return next(new ApiError(`No document for this id ${id}`, 404));
+                }
+                res.status(200).json({ data: document });
+        });
+
+export const getAll = (Model, modelName = '') =>
         asyncHandler(async (req, res) => {
                 let filter = {};
                 if (req.filterObject) {

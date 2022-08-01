@@ -6,6 +6,7 @@ import {
         updateUserValidator,
         deleteUserValidator,
         changeUserPasswordValidator,
+        updateLoggedUserValidator,
 } from '../utils/validators/userValidator.js';
 
 import {
@@ -17,6 +18,10 @@ import {
         uploadUserImage,
         resizeImage,
         changeUserPassword,
+        getLoggedUserData,
+        updateLoggedUserPassword,
+        updateLoggedUserData,
+        deleteLoggedUserData,
 } from '../services/userService.js';
 import {
         protect,
@@ -24,17 +29,24 @@ import {
 } from '../services/authService.js';
 
 const router = express.Router();
+router.use(protect);
 
+router.get('/getMe', getLoggedUserData, getUser);
+router.put('/changeMyPassword', updateLoggedUserPassword);
+router.put('/updateMe', updateLoggedUserValidator, updateLoggedUserData);
+router.delete('/deleteMe', deleteLoggedUserData);
+
+// Admin only
+router.use(allowedTo('admin', 'manager'));
 router.put('/change-password/:id', changeUserPasswordValidator, changeUserPassword);
-
 router
         .route('/')
-        .get(protect, allowedTo('admin', 'manager'),getUsers)
-        .post(protect, allowedTo('admin'),uploadUserImage, resizeImage, createUserValidator, createUser);
+        .get(getUsers)
+        .post(uploadUserImage, resizeImage, createUserValidator, createUser);
 router
         .route('/:id')
-        .get(protect, allowedTo('admin'),getUserValidator, getUser)
-        .put(protect, allowedTo('admin'),uploadUserImage, resizeImage, updateUserValidator, updateUser)
-        .delete(protect, allowedTo('admin'),deleteUserValidator, deleteUser);
+        .get(getUserValidator, getUser)
+        .put(uploadUserImage, resizeImage, updateUserValidator, updateUser)
+        .delete(deleteUserValidator, deleteUser);
 
 export default router;

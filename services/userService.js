@@ -11,6 +11,7 @@ import {
 } from './handlersFactory.js';
 import { uploadSingleImage } from '../middlewares/uploadImageMiddleware.js';
 import ApiError from '../utils/apiError.js';
+import createToken from '../utils/createToken.js';
 
 export const resizeImage = asyncHandler(async (req, res, next) => {
         const filename = `user-${uuidv4()}-${Date.now()}.jpeg`;
@@ -28,9 +29,9 @@ export const uploadUserImage = uploadSingleImage('profileImg');
 // @access  private/admin
 export const getUsers = getAll(User);
 
-// @desc    Get a single user
+// @desc    Get specific user by id
 // @route   GET /api/v1/users/:id
-// @access  private/admin
+// @access  Private/Admin
 export const getUser = getOne(User);
 
 // @desc   - Create a new user
@@ -78,3 +79,59 @@ export const changeUserPassword = asyncHandler(async (req, res, next) => {
 // @route  - DELETE /api/v1/users/:id
 // @access - Private/Admin
 export const deleteUser = deleteOne(User);
+
+// @desc    Get Logged user data
+// @route   GET /api/v1/users/getMe
+// @access  Private/Protect
+export const getLoggedUserData = asyncHandler(async (req, res, next) => {
+        req.params.id = req.user._id;
+        next();
+});
+
+// @desc    Update logged user password
+// @route   PUT /api/v1/users/updateMyPassword
+// @access  Private/Protect
+export const updateLoggedUserPassword = asyncHandler(async (req, res, next) => {
+        // 1) Update user password based user payload (req.user._id)
+        const user = await User.findByIdAndUpdate(
+                req.user._id,
+                {
+                        password: await bcrypt.hash(req.body.password, 12),
+                        passwordChangedAt: Date.now(),
+                },
+                {
+                        new: true,
+                }
+        );
+
+        // 2) Generate token
+        const token = createToken(user._id);
+
+        res.status(200).json({ data: user, token }); // if user change password, we generate a new token, but if admin change password, we don't generate a new token
+});
+
+// @desc    Update logged user data (without password, role)
+// @route   PUT /api/v1/users/updateMe
+// @access  Private/Protect
+export const updateLoggedUserData = asyncHandler(async (req, res, next) => {
+        const updatedUser = await User.findByIdAndUpdate(
+                req.user._id,
+                {
+                        name: req.body.name,
+                        email: req.body.email,
+                        phone: req.body.phone,
+                },
+                { new: true }
+        );
+
+        res.status(200).json({ data: updatedUser });
+});
+
+// @desc    Deactivate logged user
+// @route   DELETE /api/v1/users/deleteMe
+// @access  Private/Protect
+export const deleteLoggedUserData = asyncHandler(async (req, res, next) => {
+        await User.findByIdAndUpdate(req.user._id, { active: false });
+
+        res.status(204).json({ status: 'Success' });
+});

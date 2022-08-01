@@ -1,14 +1,13 @@
 import crypto from 'crypto';
 
 import bcrypt from 'bcrypt';
-import Jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import asyncHandler from 'express-async-handler';
 
 import ApiError from '../utils/apiError.js';
 import User from '../models/userModel.js';
 import sendEmail from '../utils/sendEmail.js';
-
-const createToken = (payload) => Jwt.sign({ userId: payload }, process.env.JWT_SECRET_KEY, { expiresIn: process.env.JWT_EXPIRE_TIME })
+import createToken from '../utils/createToken.js';
 
 // @desc    Signup a new user
 // @route   POST /api/v1/auth/signup
@@ -34,9 +33,10 @@ export const login = asyncHandler(async (req, res, next) => {
         const { email, password } = req.body;
         // 2) check if user exists
         const user = await User.findOne({ email }).select('+password');
-        // 3) if user exists, check if password is correct
-        if (!user || !(await bcrypt.compare(password, user.password))) {
-                throw new ApiError('Incorrect email or password', 401);
+        // 3) if user exists, check if password is correct and if user changed his password display when he last changed it
+        if (!user || !(await bcrypt.compare(password, user.password)) && user.passwordChangedAt) {
+                user.passwordChangedAt = user.passwordChangedAt.toISOString();
+                throw new ApiError(`Invalid credentials and password has been changed at ${user.passwordChangedAt}`, 401);
         }
         // 4) generate a token
         const token = createToken(user._id);
@@ -46,30 +46,51 @@ export const login = asyncHandler(async (req, res, next) => {
 
 // @desc   make sure user is logged in
 export const protect = asyncHandler(async (req, res, next) => {
-        // 1) check if token exists, if exists get
+        // 1) Check if token exist, if exist get
         let token;
-        if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        if (
+                req.headers.authorization &&
+                req.headers.authorization.startsWith('Bearer')
+        ) {
                 token = req.headers.authorization.split(' ')[1];
         }
         if (!token) {
-                throw new ApiError('You are not logged in! Please login to continue.', 401);
+                return next(
+                        new ApiError(
+                                'You are not login, Please login to get access this route',
+                                401
+                        )
+                );
         }
         // 2) Verify token (no change happens, expired token)
-        const decoded = await Jwt.verify(token, process.env.JWT_SECRET_KEY);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+
         // 3) Check if user exists
         const currentUser = await User.findById(decoded.userId);
         if (!currentUser) {
-                throw new ApiError('User does not exist', 401);
+                return next(
+                        new ApiError(
+                                'The user that belong to this token does no longer exist',
+                                401
+                        )
+                );
         }
-        // 4) check if user changed password after the token was created
+        // 4) Check if user change his password after token created
         if (currentUser.passwordChangedAt) {
-                const passChangedTimestamp = parseInt(currentUser.passwordChangedAt.getTime() / 1000, 10);
-                const tokenCreatedTimestamp = parseInt(decoded.iat, 10);
-                if (tokenCreatedTimestamp < passChangedTimestamp) {
-                        throw new ApiError('User recently changed password! Please login again.', 401);
+                const passChangedTimestamp = parseInt(
+                        currentUser.passwordChangedAt.getTime() / 1000,
+                        10
+                );
+                // Password changed after token created (Error)
+                if (passChangedTimestamp > decoded.iat) {
+                        return next(
+                                new ApiError(
+                                        'User recently changed his password. please login again..',
+                                        401
+                                )
+                        );
                 }
         }
-        // 5) set user to req.user
         req.user = currentUser;
         next();
 });
@@ -122,4 +143,69 @@ export const forgotPassword = asyncHandler(async (req, res, next) => {
                 throw new ApiError('Error sending email', 500);
         }
         res.status(200).json({ message: 'Email sent' });
+});
+
+
+// @desc   Verify reset code
+// @route  GET /api/v1/auth/verify-reset-code
+// @access Public
+export const verifyResetCode = asyncHandler(async (req, res, next) => {
+        // 1) Get user based on reset code
+        const hashedResetCode = crypto
+                .createHash('sha256')
+                .update(req.body.resetCode)
+                .digest('hex');
+
+        const user = await User.findOne({
+                passwordResetCode: hashedResetCode,
+        });
+        if (user) {
+                const resetCodeExpiry = user.passwordResetExpires;
+                if (resetCodeExpiry < Date.now()) {
+                        throw new ApiError('Reset code expired', 400);
+                }
+                if (user.passwordResetVerified) {
+                        throw new ApiError('This code has already been used', 400);
+                }
+        }
+        if (!user) {
+                throw new ApiError('Invalid reset code', 400);
+        }
+        // 2) Reset code valid
+        user.passwordResetVerified = true;
+        await user.save();
+
+        res.status(200).json({
+                status: 'Success',
+        });
+}
+);
+
+// @desc   Reset password
+// @route  PUT /api/v1/auth/reset-password
+// @access Public
+export const resetPassword = asyncHandler(async (req, res, next) => {
+        // 1) Get user based on email
+        const user = await User.findOne({ email: req.body.email });
+        if (!user) {
+                throw new ApiError(`No user found with this email ${req.body.email}`, 404);
+        }
+        // 2) check if reset code is valid
+        if (!user.passwordResetVerified) {
+                throw new ApiError('Reset code not verified', 400);
+        }
+
+        user.password = req.body.password;
+        user.passwordChangedAt = Date.now();
+        user.passwordResetCode = undefined;
+        user.passwordResetExpires = undefined;
+        user.passwordResetVerified = undefined;
+        await user.save();
+
+        // 3) if everything is ok, generate a new token
+        const token = await createToken(user._id);
+        res.status(200).json({
+                status: 'Success',
+                token,
+        });
 });
