@@ -1,6 +1,5 @@
 import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
-import slugify from 'slugify';
 import asyncHandler from 'express-async-handler';
 import Brand from '../models/brandModel.js';
 import {

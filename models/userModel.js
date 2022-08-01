@@ -37,6 +37,8 @@ const userSchema = new mongoose.Schema({
                 type: Boolean,
                 default: true
         },
+        // Embedded Document
+        // address: [{ title: String, postalCode: String, street: String, city: String, country: String }],
 }, { timestamps: true });
 
 userSchema.pre('save', async function (next) {
