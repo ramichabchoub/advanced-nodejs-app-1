@@ -13,6 +13,8 @@ import {
         createReview,
         updateReview,
         deleteReview,
+        createFilterObj,
+        setProductIdAndUserIdToBody,
 } from '../services/reviewService.js';
 
 import {
@@ -20,12 +22,12 @@ import {
         allowedTo
 } from '../services/authService.js';
 
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
 router
         .route('/')
-        .get(getReviews)
-        .post(protect, allowedTo('user'), createReviewValidator, createReview);
+        .get(createFilterObj, getReviews)
+        .post(protect, allowedTo('user'), setProductIdAndUserIdToBody, createReviewValidator, createReview);
 router
         .route('/:id')
         .get(getReviewValidator, getReview)

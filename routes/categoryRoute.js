@@ -23,7 +23,7 @@ import {
 } from '../services/authService.js';
 
 const router = express.Router();
-
+// nested route
 router.use('/:categoryId/subcategories', subcategoriesRoute);
 
 router

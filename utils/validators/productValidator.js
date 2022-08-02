@@ -127,12 +127,6 @@ export const updateProductValidator = [
                 .withMessage('must be at least 3 chars')
                 .notEmpty()
                 .withMessage('Product required'),
-        body('title').custom((val, { req }) => {
-                req.body.title = val.toLowerCase();
-                req.body.slug = slugify(val);
-                return true;
-        }
-        ),
         validatorMiddleware,
 ];
 

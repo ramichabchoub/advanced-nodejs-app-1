@@ -8,6 +8,8 @@ export const deleteOne = (Model) =>
                 if (!doc) {
                         return next(new ApiError('Not found', 404));
                 }
+                // Trigger the middleware to update the average rating and ratingsQuantity
+                doc.remove();
                 res.status(204).json({ success: true, data: null });
         });
 
@@ -17,6 +19,8 @@ export const updateOne = (Model) =>
                 if (!doc) {
                         return next(new ApiError('Not found', 404));
                 }
+                // Trigger the middleware to update the average rating and quantity
+                doc.save();
                 res.status(200).json({ success: true, data: doc });
         });
 

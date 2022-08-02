@@ -137,7 +137,7 @@ export const getProducts = getAll(Product, 'product');
 // @desc   - Get a single product
 // @route  - GET /api/v1/products/:id
 // @access - Public
-export const getProduct = getOne(Product);
+export const getProduct = getOne(Product, 'reviews');
 
 // @desc   - Create a new product
 // @route  - POST /api/v1/products
