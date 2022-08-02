@@ -43,7 +43,14 @@ const userSchema = new mongoose.Schema({
                 ref: 'Product'
         }],
         // Embedded Document
-        // address: [{ title: String, postalCode: String, street: String, city: String, country: String }],
+        addresses: [{
+                id: { type: mongoose.Schema.Types.ObjectId },
+                alias: String,
+                details: String,
+                phone: String,
+                city: String,
+                postalCode: String,
+        }],
 }, { timestamps: true });
 
 userSchema.pre('save', async function (next) {
