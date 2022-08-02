@@ -37,6 +37,11 @@ const userSchema = new mongoose.Schema({
                 type: Boolean,
                 default: true
         },
+        // child reference (one to many) because user don't have many wishlist products
+        wishlist: [{
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Product'
+        }],
         // Embedded Document
         // address: [{ title: String, postalCode: String, street: String, city: String, country: String }],
 }, { timestamps: true });
