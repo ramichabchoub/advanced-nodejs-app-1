@@ -83,6 +83,7 @@ productSchema.pre(/^find/, function (next) {
         next();
 });
 
+// virtual population
 productSchema.virtual('reviews', {
         ref: 'Review',
         foreignField: 'product',
