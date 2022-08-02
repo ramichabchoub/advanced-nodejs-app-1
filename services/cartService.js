@@ -191,11 +191,13 @@ export const applyCoupon = asyncHandler(async (req, res, next) => {
         ).toFixed(2); // 99.23
 
         cart.totalPriceAfterDiscount = totalPriceAfterDiscount;
+        const totalCartQuantity = calcTotalCartQuantity(cart);
         await cart.save();
 
         res.status(200).json({
                 status: 'success',
                 numOfCartItems: cart.cartItems.length,
+                totalCartQuantity,
                 data: cart,
         });
 });
