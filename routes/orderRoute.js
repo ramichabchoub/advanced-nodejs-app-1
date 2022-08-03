@@ -7,6 +7,7 @@ import {
         findSpecificOrder,
         updateOrderToPaid,
         updateOrderToDelivered,
+        checkoutSession,
 } from '../services/orderService.js';
 import {
         protect,
@@ -15,6 +16,12 @@ import {
 
 const router = express.Router();
 router.use(protect,);
+
+router.get(
+        '/checkout-session/:cartId',
+        allowedTo('user'),
+        checkoutSession
+);
 
 router.route('/:cartId').post(allowedTo('user'), createCashOrder);
 router.get(

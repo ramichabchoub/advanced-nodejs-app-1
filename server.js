@@ -1,3 +1,5 @@
+import cors from 'cors';
+import compression from 'compression';
 import path from 'path';
 
 import express from 'express';
@@ -12,6 +14,13 @@ import mountRoutes from './routes/index.js';
 dotenv.config({ path: "./config/config.env" });
 // express app
 const app = express();
+
+// enable other domains to access our API
+app.use(cors());
+app.options('*', cors());
+
+// compress all responses
+app.use(compression());
 
 // connect to db
 dbConnection();
